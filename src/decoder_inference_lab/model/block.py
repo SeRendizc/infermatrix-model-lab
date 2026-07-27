@@ -5,6 +5,7 @@ from torch import nn
 
 from decoder_inference_lab.config import ModelConfig
 from decoder_inference_lab.model.attention import CausalSelfAttention, KVCache
+from decoder_inference_lab.model.cache import StaticKVCache
 from decoder_inference_lab.model.mlp import FeedForward
 from decoder_inference_lab.model.norm import RMSNorm
 
@@ -21,6 +22,7 @@ class TransformerBlock(nn.Module):
         self,
         x: torch.Tensor,
         past_key_value: KVCache | None = None,
+        static_cache: StaticKVCache | None = None,
         use_cache: bool = False,
     ) -> torch.Tensor | tuple[torch.Tensor, KVCache]:
         # x: [B, T, D]
@@ -29,6 +31,7 @@ class TransformerBlock(nn.Module):
         attention_result = self.attention(
             attention_input,
             past_key_value=past_key_value,
+            static_cache=static_cache,
             use_cache=use_cache,
         )
 

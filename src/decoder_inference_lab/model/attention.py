@@ -6,6 +6,7 @@ import torch
 from torch import nn
 
 from decoder_inference_lab.config import ModelConfig
+from decoder_inference_lab.model.cache import StaticKVCache
 
 KVCache = tuple[torch.Tensor, torch.Tensor]
 
@@ -66,6 +67,7 @@ class CausalSelfAttention(nn.Module):
         self,
         x: torch.Tensor,
         past_key_value: KVCache | None = None,
+        static_cache: StaticKVCache | None = None,
         use_cache: bool = False,
     ) -> torch.Tensor | tuple[torch.Tensor, KVCache]:
         # x: [B, Q, D]
@@ -98,10 +100,27 @@ class CausalSelfAttention(nn.Module):
 
         # query/new_key/new_value: [B, H, Q, Dₕ]
 
-        if past_key_value is None:
+        if (
+            past_key_value is not None
+            and static_cache is not None
+        ):
+            raise ValueError("past_key_value 与 static_cache 不能同时使用")
+
+        if static_cache is not None:
+            if not use_cache:
+                raise ValueError("使用 static_cache 时 use_cache 必须为 True")
+
+            # 必须在 update() 推进 valid_length 之前读取
+            past_length = static_cache.valid_length  # ①
+
+            # 写入本轮 new K/V，取得全部有效 K/V
+            key, value = static_cache.update(new_key, new_value)  # ②
+
+        elif past_key_value is None:
             past_length = 0
             key = new_key
             value = new_value
+
         else:
             past_key, past_value = past_key_value
             past_length = past_key.shape[2]
