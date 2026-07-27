@@ -47,9 +47,7 @@ def benchmark_call(
             end_time = time.perf_counter()
 
             elapsed_seconds = end_time - start_time
-            per_call_times.append(
-                elapsed_seconds / calls_per_run
-            )
+            per_call_times.append(elapsed_seconds / calls_per_run)
 
     return statistics.median(per_call_times)
 
@@ -122,9 +120,7 @@ def profile_context_length(
         device=device,
     )
 
-    cache_mib = bytes_to_mib(
-        cache_size_bytes(past_key_values)
-    )
+    cache_mib = bytes_to_mib(cache_size_bytes(past_key_values))
 
     return (
         prefill_seconds * 1000,
@@ -136,9 +132,7 @@ def profile_context_length(
 def main() -> None:
     torch.manual_seed(42)
 
-    device = torch.device(
-        "cuda" if torch.cuda.is_available() else "cpu"
-    )
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     config = ModelConfig(
         vocab_size=256,
@@ -160,30 +154,18 @@ def main() -> None:
     print(f"layers: {config.num_layers}")
     print(f"d_model: {config.d_model}")
     print()
-    print(
-        f"{'context':>8} "
-        f"{'prefill ms':>12} "
-        f"{'decode ms':>12} "
-        f"{'cache MiB':>12}"
-    )
+    print(f"{'context':>8} {'prefill ms':>12} {'decode ms':>12} {'cache MiB':>12}")
     print("-" * 50)
 
     for context_length in context_lengths:
-        prefill_ms, decode_ms, cache_mib = (
-            profile_context_length(
-                model=model,
-                config=config,
-                context_length=context_length,
-                device=device,
-            )
+        prefill_ms, decode_ms, cache_mib = profile_context_length(
+            model=model,
+            config=config,
+            context_length=context_length,
+            device=device,
         )
 
-        print(
-            f"{context_length:>8} "
-            f"{prefill_ms:>12.3f} "
-            f"{decode_ms:>12.3f} "
-            f"{cache_mib:>12.3f}"
-        )
+        print(f"{context_length:>8} {prefill_ms:>12.3f} {decode_ms:>12.3f} {cache_mib:>12.3f}")
 
 
 if __name__ == "__main__":
