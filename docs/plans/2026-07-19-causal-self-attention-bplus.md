@@ -198,9 +198,7 @@ def test_attention_supports_backward() -> None:
     assert x.grad is not None
     assert torch.isfinite(x.grad).all()
     parameter_gradients = [
-        parameter.grad
-        for parameter in attention.parameters()
-        if parameter.requires_grad
+        parameter.grad for parameter in attention.parameters() if parameter.requires_grad
     ]
     assert parameter_gradients
     assert all(gradient is not None for gradient in parameter_gradients)
